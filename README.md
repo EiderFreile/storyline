@@ -1,6 +1,6 @@
 # 📖 Storyline
 
-Tu universo narrativo. App PWA para iPhone de gestión de proyectos de escritura.
+Tu universo narrativo.  App PWA para iPhone de gestión de proyectos de escritura.
 
 ---
 
