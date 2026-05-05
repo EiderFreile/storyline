@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Storyline" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Storyline</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import { getDatabase, ref, set, get, push, remove, update, onValue }
+      from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+    // ═══════════════════════════════════════════════════
+    // CONFIGURACIÓN FIREBASE — reemplaza con tus datos
+    // ═══════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxtl_lc9b6zS-6ld-LMGcBAyk6XjQ7vck",
+      authDomain: "nail-projects.firebaseapp.com",
+      databaseURL: "https://nail-projects-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "nail-projects",
+      storageBucket: "nail-projects.firebasestorage.app",
+      messagingSenderId: "923664169473",
+      appId: "1:923664169473:web:16f3c712ddd4d3400d9e00"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window._db = db;
+    window._dbRef = ref;
+    window._dbSet = set;
+    window._dbGet = get;
+    window._dbPush = push;
+    window._dbRemove = remove;
+    window._dbUpdate = update;
+    window._dbOnValue = onValue;
+    window._firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+  </script>
+
+  <style>
+    /* ══════════════════════════════════════════
+       DESIGN TOKENS & RESET
+    ══════════════════════════════════════════ */
+    :root {
+      --bg:         #0d0d0d;
+      --bg2:        #141414;
+      --bg3:        #1c1c1e;
+      --bg4:        #242426;
+      --border:     rgba(255,255,255,0.08);
+      --border2:    rgba(255,255,255,0.14);
+      --gold:       #c9a84c;
+      --gold-light: #e2c97e;
+      --gold-dim:   rgba(201,168,76,0.18);
+      --text:       #f0ece4;
+      --text2:      #a09880;
+      --text3:      #5c5848;
+      --red:        #c0392b;
+      --green:      #2ecc71;
+      --blue:       #3498db;
+      --purple:     #9b59b6;
+      --pink:       #e91e8c;
+      --radius:     14px;
+      --radius-sm:  8px;
+      --safe-top:   env(safe-area-inset-top, 44px);
+      --safe-bot:   env(safe-area-inset-bottom, 20px);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    input, textarea, select { font-family: inherit; }
+    input:focus, textarea:focus, select:focus { outline: none; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ══════════════════════════════════════════
+       APP SHELL
+    ══════════════════════════════════════════ */
+    #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+    /* ══════════════════════════════════════════
+       LOCK SCREEN
+    ══════════════════════════════════════════ */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 32px;
+      padding: 40px;
+    }
+    .lock-logo { text-align: center; }
+    .lock-logo-icon {
+      width: 80px; height: 80px; margin: 0 auto 16px;
+      background: linear-gradient(135deg, #c9a84c, #e2c97e);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 8px 32px rgba(201,168,76,0.35);
+    }
+    .lock-logo h1 { font-family: var(--font-serif); font-size: 36px; font-weight: 300; letter-spacing: 3px; color: var(--gold-light); }
+    .lock-logo p { font-size: 13px; color: var(--text3); letter-spacing: 1px; margin-top: 4px; }
+    .lock-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+    .lock-form input {
+      width: 100%; padding: 16px 18px; border-radius: var(--radius);
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-size: 18px; letter-spacing: 4px;
+      text-align: center;
+    }
+    .lock-form input::placeholder { letter-spacing: 1px; color: var(--text3); font-size: 14px; }
+    .lock-btn {
+      padding: 16px; border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0d0d0d; font-size: 15px; font-weight: 500; letter-spacing: 1px;
+    }
+    .lock-hint { font-size: 12px; color: var(--text3); text-align: center; line-height: 1.6; }
+    .lock-error { font-size: 13px; color: var(--red); text-align: center; }
+
+    /* ══════════════════════════════════════════
+       PROJECTS SCREEN
+    ══════════════════════════════════════════ */
+    #projects-screen {
+      flex: 1; overflow-y: auto;
+      padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bot) + 80px);
+    }
+    .screen-header { margin-bottom: 28px; }
+    .screen-header h1 { font-family: var(--font-serif); font-size: 34px; font-weight: 300; color: var(--gold-light); letter-spacing: 1px; }
+    .screen-header p { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+    .projects-grid { display: flex; flex-direction: column; gap: 14px; }
+    .project-card {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px; position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .project-card:active { transform: scale(0.98); }
+    .project-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+    .project-card-title { font-family: var(--font-serif); font-size: 22px; font-weight: 400; color: var(--text); }
+    .project-card-desc { font-size: 13px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+    .project-card-meta { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .project-card-tag {
+      font-size: 11px; color: var(--text3); background: var(--bg4);
+      padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+    }
+    .project-card-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; }
+    .icon-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--bg4); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+    .fab {
+      position: fixed; bottom: calc(var(--safe-bot) + 90px); right: 24px;
+      width: 56px; height: 56px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0d0d0d; font-size: 26px; font-weight: 300;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 24px rgba(201,168,76,0.4);
+      z-index: 100;
+      transition: transform 0.15s;
+    }
+    .fab:active { transform: scale(0.93); }
+
+    /* ══════════════════════════════════════════
+       PROJECT DETAIL (tabs)
+    ══════════════════════════════════════════ */
+    #project-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .project-topbar {
+      padding: calc(var(--safe-top) + 12px) 20px 12px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .back-btn { font-size: 22px; color: var(--gold); padding: 4px; }
+    .project-topbar-title { font-family: var(--font-serif); font-size: 20px; font-weight: 400; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Main tabs */
+    .main-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border);
+      background: var(--bg2); flex-shrink: 0; overflow-x: auto;
+    }
+    .main-tabs::-webkit-scrollbar { display: none; }
+    .main-tab {
+      flex: 1; min-width: 70px; padding: 14px 8px 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      font-size: 9px; color: var(--text3); letter-spacing: 0.5px;
+      text-transform: uppercase; border-bottom: 2px solid transparent;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .main-tab .tab-icon { font-size: 18px; }
+    .main-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .tab-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .tab-panel { display: none; flex: 1; overflow-y: auto; padding: 20px 20px calc(var(--safe-bot) + 20px); }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-shrink: 0;
+    }
+    .sub-tab {
+      padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      color: var(--text3); background: var(--bg3); border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .sub-tab.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+
+    /* ══════════════════════════════════════════
+       CHARACTER CARDS
+    ══════════════════════════════════════════ */
+    .char-grid { display: flex; flex-direction: column; gap: 14px; }
+    .char-card {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .char-card-header {
+      padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+    }
+    .char-avatar {
+      width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-serif); font-size: 20px; font-weight: 600;
+    }
+    .char-avatar.protagonista { background: linear-gradient(135deg, #c9a84c22, #c9a84c44); color: var(--gold); border: 1px solid var(--gold); }
+    .char-avatar.antagonista { background: linear-gradient(135deg, #c0392b22, #c0392b44); color: #e74c3c; border: 1px solid #c0392b; }
+    .char-avatar.secundario { background: linear-gradient(135deg, #3498db22, #3498db44); color: #5dade2; border: 1px solid #3498db; }
+    .char-card-info { flex: 1; min-width: 0; }
+    .char-card-name { font-family: var(--font-serif); font-size: 18px; font-weight: 400; }
+    .char-card-nickname { font-size: 12px; color: var(--text3); font-style: italic; margin-top: 2px; }
+    .char-card-type {
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 10px; margin-top: 6px; display: inline-block;
+    }
+    .char-card-type.protagonista { background: var(--gold-dim); color: var(--gold); }
+    .char-card-type.antagonista { background: rgba(192,57,43,0.15); color: #e74c3c; }
+    .char-card-type.secundario { background: rgba(52,152,219,0.15); color: #5dade2; }
+
+    .char-card-expand { padding: 0 18px 16px; border-top: 1px solid var(--border); display: none; }
+    .char-card-expand.open { display: block; }
+    .char-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .char-detail-item label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; }
+    .char-detail-item p { font-size: 14px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
+    .char-detail-full { margin-top: 12px; }
+    .char-detail-full label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; }
+    .char-detail-full p { font-size: 14px; color: var(--text2); margin-top: 3px; line-height: 1.6; }
+    .char-rel-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg4); border: 1px solid var(--border);
+      padding: 5px 10px; border-radius: 20px; margin: 4px 4px 0 0;
+      font-size: 12px; color: var(--text2);
+    }
+    .char-rel-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* ══════════════════════════════════════════
+       RELATIONSHIP MATRIX
+    ══════════════════════════════════════════ */
+    .rel-list { display: flex; flex-direction: column; gap: 12px; }
+    .rel-card {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 16px 18px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .rel-chars { flex: 1; display: flex; align-items: center; gap: 8px; }
+    .rel-char-name { font-family: var(--font-serif); font-size: 15px; color: var(--text); }
+    .rel-arrow { font-size: 14px; color: var(--text3); }
+    .rel-type-badge {
+      font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500;
+    }
+    .rel-type-badge.amigos { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .rel-type-badge.enemigos { background: rgba(192,57,43,0.15); color: #e74c3c; }
+    .rel-type-badge.romance { background: rgba(233,30,140,0.15); color: #e91e8c; }
+    .rel-type-badge.familia { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .rel-type-badge.aliados { background: rgba(52,152,219,0.15); color: #5dade2; }
+    .rel-type-badge.rival { background: rgba(155,89,182,0.15); color: #bb8fce; }
+    .rel-type-badge.otro { background: var(--bg4); color: var(--text3); }
+
+    /* ══════════════════════════════════════════
+       TIMELINE
+    ══════════════════════════════════════════ */
+    .timeline-list { display: flex; flex-direction: column; gap: 14px; }
+    .timeline-card {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 16px 18px;
+    }
+    .timeline-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .timeline-card-name { font-family: var(--font-serif); font-size: 18px; }
+    .timeline-card-range { font-size: 11px; color: var(--text3); margin-top: 4px; }
+    .timeline-bar {
+      margin: 16px 0 8px; height: 3px; background: var(--bg4); border-radius: 2px;
+      position: relative;
+    }
+    .timeline-bar-fill { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 2px; }
+    .timeline-milestones { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .milestone-item {
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .milestone-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--gold);
+      margin-top: 5px; flex-shrink: 0;
+    }
+    .milestone-text { flex: 1; }
+    .milestone-name { font-size: 14px; color: var(--text); }
+    .milestone-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* ══════════════════════════════════════════
+       SCENES
+    ══════════════════════════════════════════ */
+    .scene-list { display: flex; flex-direction: column; gap: 14px; }
+    .scene-card {
+      background: var(--bg3); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .scene-card-header { padding: 16px 18px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .scene-card-title { font-family: var(--font-serif); font-size: 18px; }
+    .scene-card-meta { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.5; }
+    .scene-card-chars { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 16px; }
+    .scene-char-chip {
+      font-size: 11px; padding: 3px 10px; border-radius: 20px;
+      background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+    }
+    .scene-card-text { padding: 14px 18px; border-top: 1px solid var(--border); font-size: 14px; color: var(--text2); line-height: 1.7; display: none; }
+    .scene-card-text.open { display: block; }
+
+    .voice-recorder {
+      background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border);
+      padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .mic-btn {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--bg4); border: 2px solid var(--border2);
+      display: flex; align-items: center; justify-content: center; font-size: 32px;
+      transition: all 0.2s;
+    }
+    .mic-btn.recording {
+      background: rgba(192,57,43,0.2); border-color: #e74c3c;
+      animation: pulse-mic 1s ease-in-out infinite;
+    }
+    @keyframes pulse-mic {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.4); }
+      50% { box-shadow: 0 0 0 16px rgba(231,76,60,0); }
+    }
+    .voice-transcript {
+      width: 100%; min-height: 100px; background: var(--bg4);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 14px; font-size: 14px; color: var(--text2); line-height: 1.6;
+      resize: none;
+    }
+    .voice-actions { display: flex; gap: 10px; width: 100%; }
+    .voice-actions button { flex: 1; padding: 13px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; }
+    .btn-accept { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #0d0d0d; }
+    .btn-cancel { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+
+    /* ══════════════════════════════════════════
+       MODALES / DRAWERS
+    ══════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-sheet {
+      width: 100%; max-width: 600px; max-height: 92vh;
+      background: var(--bg2); border-radius: 20px 20px 0 0;
+      border-top: 1px solid var(--border2);
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; flex-direction: column;
+      padding-bottom: var(--safe-bot);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+    .modal-header { padding: 16px 20px 0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-title { font-family: var(--font-serif); font-size: 22px; font-weight: 400; }
+    .modal-close { font-size: 22px; color: var(--text3); padding: 4px; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }
+
+    /* ══════════════════════════════════════════
+       FORM ELEMENTS
+    ══════════════════════════════════════════ */
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .form-input {
+      width: 100%; padding: 13px 16px; border-radius: var(--radius-sm);
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-size: 15px;
+    }
+    .form-input:focus { border-color: var(--gold); }
+    .form-textarea {
+      width: 100%; padding: 13px 16px; border-radius: var(--radius-sm);
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-size: 15px; resize: none; min-height: 100px; line-height: 1.6;
+    }
+    .form-textarea:focus { border-color: var(--gold); }
+    .form-select {
+      width: 100%; padding: 13px 16px; border-radius: var(--radius-sm);
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-size: 15px; appearance: none;
+    }
+    .form-select:focus { border-color: var(--gold); }
+    .form-section-title {
+      font-family: var(--font-serif); font-size: 16px; color: var(--gold-light);
+      margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .btn-primary {
+      width: 100%; padding: 16px; border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0d0d0d; font-size: 15px; font-weight: 500; letter-spacing: 0.5px;
+    }
+    .btn-secondary {
+      width: 100%; padding: 14px; border-radius: var(--radius);
+      background: var(--bg4); color: var(--text2); font-size: 14px;
+      border: 1px solid var(--border);
+    }
+    .btn-danger {
+      padding: 10px 16px; border-radius: var(--radius-sm);
+      background: rgba(192,57,43,0.15); color: #e74c3c; font-size: 13px;
+      border: 1px solid rgba(192,57,43,0.3);
+    }
+
+    /* ══════════════════════════════════════════
+       EMPTY STATES
+    ══════════════════════════════════════════ */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 60px 20px; text-align: center;
+    }
+    .empty-state-icon { font-size: 48px; opacity: 0.3; }
+    .empty-state h3 { font-family: var(--font-serif); font-size: 22px; font-weight: 300; color: var(--text2); }
+    .empty-state p { font-size: 13px; color: var(--text3); line-height: 1.6; max-width: 240px; }
+
+    /* ══════════════════════════════════════════
+       PLOT
+    ══════════════════════════════════════════ */
+    .plot-card {
+      background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border);
+      padding: 18px; margin-bottom: 14px;
+    }
+    .plot-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .plot-card-title { font-family: var(--font-serif); font-size: 18px; }
+    .plot-card-char { font-size: 11px; color: var(--gold); background: var(--gold-dim); padding: 3px 10px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+    .plot-card-text { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+    /* ══════════════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════════════ */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { animation: fadeSlideIn 0.3s ease forwards; }
+
+    /* ══════════════════════════════════════════
+       HIDDEN UTILITY
+    ══════════════════════════════════════════ */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ╔══════════════════════════════════╗
+       ║        LOCK SCREEN               ║
+       ╚══════════════════════════════════╝ -->
+  <div id="lock-screen">
+    <div class="lock-logo">
+      <div class="lock-logo-icon">📖</div>
+      <h1>Storyline</h1>
+      <p>TU UNIVERSO NARRATIVO</p>
+    </div>
+    <div class="lock-form">
+      <input type="password" id="lock-input" placeholder="Contraseña" autocomplete="current-password" />
+      <div id="lock-error" class="lock-error hidden"></div>
+      <button class="lock-btn" onclick="App.unlock()">Entrar</button>
+    </div>
+    <p class="lock-hint" id="lock-hint"></p>
+  </div>
+
+  <!-- ╔══════════════════════════════════╗
+       ║       PROJECTS SCREEN            ║
+       ╚══════════════════════════════════╝ -->
+  <div id="projects-screen" class="hidden">
+    <div class="screen-header">
+      <h1>Storyline</h1>
+      <p id="projects-count">Mis proyectos</p>
+    </div>
+    <div class="projects-grid" id="projects-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <h3>Sin proyectos aún</h3>
+        <p>Pulsa + para crear tu primer proyecto de escritura</p>
+      </div>
+    </div>
+    <button class="fab" onclick="Modals.openProject()">+</button>
+  </div>
+
+  <!-- ╔══════════════════════════════════╗
+       ║       PROJECT DETAIL             ║
+       ╚══════════════════════════════════╝ -->
+  <div id="project-screen" class="hidden">
+    <div class="project-topbar">
+      <button class="back-btn" onclick="App.goBack()">‹</button>
+      <span class="project-topbar-title" id="project-title-bar">Proyecto</span>
+    </div>
+
+    <!-- Main tabs -->
+    <div class="main-tabs">
+      <button class="main-tab active" data-tab="characters" onclick="App.switchTab('characters')">
+        <span class="tab-icon">👤</span>Personajes
+      </button>
+      <button class="main-tab" data-tab="plot" onclick="App.switchTab('plot')">
+        <span class="tab-icon">📜</span>Trama
+      </button>
+      <button class="main-tab" data-tab="timeline" onclick="App.switchTab('timeline')">
+        <span class="tab-icon">⏳</span>Cronología
+      </button>
+      <button class="main-tab" data-tab="scenes" onclick="App.switchTab('scenes')">
+        <span class="tab-icon">🎬</span>Escenas
+      </button>
+    </div>
+
+    <div class="tab-content">
+
+      <!-- ── TAB: PERSONAJES ── -->
+      <div class="tab-panel active" id="tab-characters">
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="App.switchSubTab('characters','chars-list')">Personajes</button>
+          <button class="sub-tab" onclick="App.switchSubTab('characters','chars-relations')">Relaciones</button>
+        </div>
+        <!-- Sub: Lista personajes -->
+        <div id="sub-chars-list" class="char-grid"></div>
+        <!-- Sub: Relaciones -->
+        <div id="sub-chars-relations" class="hidden rel-list"></div>
+        <button class="fab" id="fab-characters" onclick="Modals.openCharacter()">+</button>
+      </div>
+
+      <!-- ── TAB: TRAMA ── -->
+      <div class="tab-panel" id="tab-plot">
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="App.switchSubTab('plot','plot-chars')">Por personaje</button>
+          <button class="sub-tab" onclick="App.switchSubTab('plot','plot-general')">General</button>
+        </div>
+        <div id="sub-plot-chars"></div>
+        <div id="sub-plot-general" class="hidden"></div>
+        <button class="fab" id="fab-plot" onclick="Modals.openPlot()">+</button>
+      </div>
+
+      <!-- ── TAB: CRONOLOGÍA ── -->
+      <div class="tab-panel" id="tab-timeline">
+        <div class="timeline-list" id="timeline-list"></div>
+        <button class="fab" id="fab-timeline" onclick="Modals.openTimeline()">+</button>
+      </div>
+
+      <!-- ── TAB: ESCENAS ── -->
+      <div class="tab-panel" id="tab-scenes">
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="App.switchSubTab('scenes','scenes-written')">Escenas</button>
+          <button class="sub-tab" onclick="App.switchSubTab('scenes','scenes-voice')">Escena Express 🎙</button>
+        </div>
+        <div id="sub-scenes-written" class="scene-list"></div>
+        <div id="sub-scenes-voice" class="hidden">
+          <div class="voice-recorder">
+            <p style="font-size:13px;color:var(--text3);text-align:center;line-height:1.6">
+              Pulsa el micrófono y dicta tu escena. Cuando termines, edítala si quieres y dale a Aceptar para guardarla.
+            </p>
+            <button class="mic-btn" id="mic-btn" onclick="Voice.toggle()">🎙</button>
+            <p id="mic-status" style="font-size:12px;color:var(--text3)">Listo para grabar</p>
+            <textarea class="voice-transcript" id="voice-transcript" placeholder="La transcripción aparecerá aquí..."></textarea>
+            <div class="voice-actions">
+              <button class="btn-cancel" onclick="Voice.cancel()">Limpiar</button>
+              <button class="btn-accept" onclick="Voice.saveScene()">Guardar escena</button>
+            </div>
+          </div>
+        </div>
+        <button class="fab" id="fab-scenes" onclick="Modals.openScene()">+</button>
+      </div>
+
+    </div><!-- /tab-content -->
+  </div><!-- /project-screen -->
+
+</div><!-- /app -->
+
+<!-- ╔══════════════════════════════════════════════════════
+     ║  MODALES
+     ╚══════════════════════════════════════════════════════ -->
+
+<!-- Modal: Proyecto -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-project-title">Nuevo proyecto</span>
+      <button class="modal-close" onclick="Modals.close('modal-project')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="project-edit-id" />
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" class="form-input" id="project-name" placeholder="Nombre de tu historia" />
+      </div>
+      <div class="form-group">
+        <label>Género</label>
+        <select class="form-select" id="project-genre">
+          <option value="">Seleccionar...</option>
+          <option>Fantasía</option><option>Ciencia ficción</option><option>Romance</option>
+          <option>Thriller</option><option>Terror</option><option>Drama</option>
+          <option>Aventura</option><option>Histórica</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Sinopsis</label>
+        <textarea class="form-textarea" id="project-synopsis" placeholder="De qué trata tu historia..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="DB.saveProject()">Guardar proyecto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Personaje -->
+<div class="modal-overlay" id="modal-character">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-char-title">Nuevo personaje</span>
+      <button class="modal-close" onclick="Modals.close('modal-character')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="char-edit-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" class="form-input" id="char-name" placeholder="Nombre" />
+        </div>
+        <div class="form-group">
+          <label>Apodo</label>
+          <input type="text" class="form-input" id="char-nickname" placeholder="Apodo o alias" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select class="form-select" id="char-type">
+            <option value="protagonista">Protagonista</option>
+            <option value="antagonista">Antagonista</option>
+            <option value="secundario">Secundario</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Edad</label>
+          <input type="text" class="form-input" id="char-age" placeholder="Edad" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Raza / Especie</label>
+        <input type="text" class="form-input" id="char-race" placeholder="Humano, elfo, alienígena..." />
+      </div>
+
+      <p class="form-section-title">Atributos físicos</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Constitución</label>
+          <select class="form-select" id="char-build">
+            <option value="">—</option>
+            <option>Delgado</option><option>Atlético</option><option>Robusto</option>
+            <option>Musculoso</option><option>Corpulento</option><option>Frágil</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Altura</label>
+          <input type="text" class="form-input" id="char-height" placeholder="Ej: 1,78m" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Color de piel</label>
+          <input type="text" class="form-input" id="char-skin" placeholder="Ej: Pálida, morena..." />
+        </div>
+        <div class="form-group">
+          <label>Marcas físicas</label>
+          <input type="text" class="form-input" id="char-marks" placeholder="Cicatrices, tatuajes..." />
+        </div>
+      </div>
+
+      <p class="form-section-title">Historia y personalidad</p>
+      <div class="form-group">
+        <label>Background</label>
+        <textarea class="form-textarea" id="char-background" placeholder="Historia personal del personaje..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Motivaciones</label>
+        <textarea class="form-textarea" id="char-motivations" placeholder="Qué mueve a este personaje..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Objetivos en la trama</label>
+        <textarea class="form-textarea" id="char-goals" placeholder="Qué quiere conseguir en la historia..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px">
+      <button class="btn-danger" id="char-delete-btn" onclick="DB.deleteCharacter()" style="display:none">Eliminar</button>
+      <button class="btn-primary" style="flex:1" onclick="DB.saveCharacter()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Relación -->
+<div class="modal-overlay" id="modal-relation">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Añadir relación</span>
+      <button class="modal-close" onclick="Modals.close('modal-relation')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rel-edit-id" />
+      <div class="form-group">
+        <label>Personaje A</label>
+        <select class="form-select" id="rel-char-a"></select>
+      </div>
+      <div class="form-group">
+        <label>Personaje B</label>
+        <select class="form-select" id="rel-char-b"></select>
+      </div>
+      <div class="form-group">
+        <label>Tipo de relación</label>
+        <select class="form-select" id="rel-type">
+          <option value="amigos">Amigos</option>
+          <option value="enemigos">Enemigos</option>
+          <option value="romance">Romance</option>
+          <option value="familia">Familia</option>
+          <option value="aliados">Aliados</option>
+          <option value="rival">Rivales</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descripción (opcional)</label>
+        <textarea class="form-textarea" id="rel-desc" placeholder="Detalles de la relación..." style="min-height:70px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="DB.saveRelation()">Guardar relación</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Trama -->
+<div class="modal-overlay" id="modal-plot">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-plot-title">Nueva trama</span>
+      <button class="modal-close" onclick="Modals.close('modal-plot')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="plot-edit-id" />
+      <input type="hidden" id="plot-type-hidden" value="general" />
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" class="form-input" id="plot-title-input" placeholder="Título de la trama" />
+      </div>
+      <div class="form-group" id="plot-char-group">
+        <label>Personaje</label>
+        <select class="form-select" id="plot-character"></select>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea class="form-textarea" id="plot-description" placeholder="Desarrolla la trama..." style="min-height:140px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px">
+      <button class="btn-danger" id="plot-delete-btn" onclick="DB.deletePlot()" style="display:none">Eliminar</button>
+      <button class="btn-primary" style="flex:1" onclick="DB.savePlot()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Línea de tiempo -->
+<div class="modal-overlay" id="modal-timeline">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-tl-title">Nueva cronología</span>
+      <button class="modal-close" onclick="Modals.close('modal-timeline')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tl-edit-id" />
+      <div class="form-group">
+        <label>Nombre de la línea</label>
+        <input type="text" class="form-input" id="tl-name" placeholder="Ej: Línea principal, Flashbacks..." />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Inicio</label>
+          <input type="text" class="form-input" id="tl-start" placeholder="Ej: Año 0, Día 1..." />
+        </div>
+        <div class="form-group">
+          <label>Fin</label>
+          <input type="text" class="form-input" id="tl-end" placeholder="Ej: Año 1, Día 365..." />
+        </div>
+      </div>
+      <p class="form-section-title">Hitos</p>
+      <div id="tl-milestones-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
+      <button class="btn-secondary" onclick="Timelines.addMilestoneField()">+ Añadir hito</button>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px">
+      <button class="btn-danger" id="tl-delete-btn" onclick="DB.deleteTimeline()" style="display:none">Eliminar</button>
+      <button class="btn-primary" style="flex:1" onclick="DB.saveTimeline()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Escena -->
+<div class="modal-overlay" id="modal-scene">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-scene-title">Nueva escena</span>
+      <button class="modal-close" onclick="Modals.close('modal-scene')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="scene-edit-id" />
+      <div class="form-group">
+        <label>Título de la escena</label>
+        <input type="text" class="form-input" id="scene-title-input" placeholder="Título descriptivo" />
+      </div>
+      <div class="form-group">
+        <label>Ubicación en la cronología</label>
+        <select class="form-select" id="scene-timeline-sel">
+          <option value="">Sin asignar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Posición (entre hitos)</label>
+        <input type="text" class="form-input" id="scene-position" placeholder="Ej: 3 días después de la boda..." />
+      </div>
+      <div class="form-group">
+        <label>Personajes en esta escena</label>
+        <div id="scene-chars-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+      </div>
+      <div class="form-group">
+        <label>Texto de la escena</label>
+        <textarea class="form-textarea" id="scene-text" placeholder="Escribe la escena aquí..." style="min-height:180px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px">
+      <button class="btn-danger" id="scene-delete-btn" onclick="DB.deleteScene()" style="display:none">Eliminar</button>
+      <button class="btn-primary" style="flex:1" onclick="DB.saveScene()">Guardar escena</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  STORYLINE APP — Main JS
+// ════════════════════════════════════════════════════════════════
+
+const PASS_KEY   = 'sl_password';
+const SETUP_KEY  = 'sl_setup_done';
+
+// ─── Estado global ───────────────────────────────────────────────
+const State = {
+  currentProjectId: null,
+  currentTab: 'characters',
+  currentSubTabs: { characters: 'chars-list', plot: 'plot-chars', scenes: 'scenes-written' },
+  data: { projects:{}, characters:{}, relations:{}, plots:{}, timelines:{}, scenes:{} },
+  listeners: []
+};
+
+// ─── FIREBASE helpers ────────────────────────────────────────────
+function dbRef(path) { return window._dbRef(window._db, path); }
+function dbSet(path, val) { return window._dbSet(dbRef(path), val); }
+function dbPush(path, val) { return window._dbPush(dbRef(path), val); }
+function dbRemove(path) { return window._dbRemove(dbRef(path)); }
+function dbUpdate(path, val) { return window._dbUpdate(dbRef(path), val); }
+function dbListen(path, cb) {
+  const r = dbRef(path);
+  window._dbOnValue(r, snap => cb(snap.val()));
+  State.listeners.push(r);
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function qs(sel, ctx) { return (ctx||document).querySelector(sel); }
+function qsa(sel, ctx) { return [...(ctx||document).querySelectorAll(sel)]; }
+
+// ─── AUTH ────────────────────────────────────────────────────────
+const Auth = {
+  init() {
+    const setup = localStorage.getItem(SETUP_KEY);
+    if (!setup) {
+      qs('#lock-hint').textContent = 'Primera vez: elige una contraseña para proteger tu app.';
+      qs('.lock-btn').textContent  = 'Crear contraseña';
+    } else {
+      qs('#lock-hint').textContent = 'Solo tú conoces esta contraseña.';
+    }
+  },
+  unlock() {
+    const val = qs('#lock-input').value.trim();
+    if (!val) return;
+    const setup = localStorage.getItem(SETUP_KEY);
+    if (!setup) {
+      if (val.length < 4) {
+        return Auth.error('La contraseña debe tener al menos 4 caracteres.');
+      }
+      localStorage.setItem(PASS_KEY, btoa(val));
+      localStorage.setItem(SETUP_KEY, '1');
+      Auth.enter();
+    } else {
+      if (btoa(val) === localStorage.getItem(PASS_KEY)) {
+        Auth.enter();
+      } else {
+        Auth.error('Contraseña incorrecta. Inténtalo de nuevo.');
+        qs('#lock-input').value = '';
+      }
+    }
+  },
+  enter() {
+    qs('#lock-screen').classList.add('hidden');
+    qs('#projects-screen').classList.remove('hidden');
+    App.initFirebase();
+  },
+  error(msg) {
+    const el = qs('#lock-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => { const li = qs('#lock-input'); if(li) li.addEventListener('keydown', e => { if(e.key==='Enter') Auth.unlock(); }); });
+
+// ─── APP NAVIGATION ──────────────────────────────────────────────
+const App = {
+  initFirebase() {
+    dbListen('projects', val => {
+      State.data.projects = val || {};
+      Render.projects();
+    });
+  },
+  openProject(id) {
+    State.currentProjectId = id;
+    qs('#project-title-bar').textContent = State.data.projects[id]?.name || 'Proyecto';
+    qs('#projects-screen').classList.add('hidden');
+    qs('#project-screen').classList.remove('hidden');
+    App.loadProjectData(id);
+    App.switchTab('characters');
+  },
+  loadProjectData(id) {
+    dbListen(`characters/${id}`, val => { State.data.characters = val||{}; Render.characters(); Render.relations(); Render.plotChars(); Render.scenesWritten(); Render.sceneModal(); });
+    dbListen(`relations/${id}`,  val => { State.data.relations  = val||{}; Render.relations(); Render.characters(); });
+    dbListen(`plots/${id}`,      val => { State.data.plots      = val||{}; Render.plotChars(); Render.plotGeneral(); });
+    dbListen(`timelines/${id}`,  val => { State.data.timelines  = val||{}; Render.timelines(); Render.sceneModal(); });
+    dbListen(`scenes/${id}`,     val => { State.data.scenes     = val||{}; Render.scenesWritten(); });
+  },
+  goBack() {
+    State.currentProjectId = null;
+    qs('#project-screen').classList.add('hidden');
+    qs('#projects-screen').classList.remove('hidden');
+    State.data = { projects: State.data.projects, characters:{}, relations:{}, plots:{}, timelines:{}, scenes:{} };
+  },
+  switchTab(name) {
+    State.currentTab = name;
+    qsa('.main-tab').forEach(t => t.classList.toggle('active', t.dataset.tab===name));
+    qsa('.tab-panel').forEach(p => p.classList.toggle('active', p.id===`tab-${name}`));
+    // Show correct fab
+    qsa('.fab[id^=fab-]').forEach(f => f.classList.add('hidden'));
+    const fab = qs(`#fab-${name}`);
+    if (fab) fab.classList.remove('hidden');
+    // relations fab special case
+    if (name==='characters') {
+      const sub = State.currentSubTabs.characters;
+      qs('#fab-characters').onclick = sub==='chars-relations'
+        ? () => Modals.openRelation()
+        : () => Modals.openCharacter();
+    }
+  },
+  switchSubTab(tab, sub) {
+    State.currentSubTabs[tab] = sub;
+    const panel = qs(`#tab-${tab}`);
+    // Hide all sub-panels, show the selected one
+    qsa('[id^=sub-]', panel).forEach(s => s.classList.add('hidden'));
+    const target = qs(`#sub-${sub}`, panel);
+    if (target) target.classList.remove('hidden');
+    // Update sub-tab buttons active state
+    const subTabs = qsa('.sub-tab', panel);
+    const subPanels = qsa('[id^=sub-]', panel);
+    subTabs.forEach(t => t.classList.remove('active'));
+    const idx = subPanels.findIndex(s => s.id === `sub-${sub}`);
+    if (subTabs[idx]) subTabs[idx].classList.add('active');
+    // fab logic
+    if (tab==='characters') {
+      qs('#fab-characters').onclick = sub==='chars-relations'
+        ? () => Modals.openRelation()
+        : () => Modals.openCharacter();
+    }
+    if (tab==='scenes') {
+      qs('#fab-scenes').classList.toggle('hidden', sub==='scenes-voice');
+    }
+  }
+};
+// Unlock btn wiring
+function unlockApp() { Auth.unlock(); }
+window.App = App;
+
+// ─── RENDER ──────────────────────────────────────────────────────
+const Render = {
+  projects() {
+    const el = qs('#projects-list');
+    const projects = State.data.projects;
+    const keys = Object.keys(projects);
+    qs('#projects-count').textContent = keys.length
+      ? `${keys.length} proyecto${keys.length>1?'s':''}` : 'Mis proyectos';
+    if (!keys.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><h3>Sin proyectos aún</h3><p>Pulsa + para crear tu primer proyecto</p></div>`;
+      return;
+    }
+    el.innerHTML = keys.map(id => {
+      const p = projects[id];
+      return `<div class="project-card animate-in" onclick="App.openProject('${id}')">
+        <div class="project-card-actions">
+          <button class="icon-btn" onclick="event.stopPropagation();Modals.openProject('${id}')">✏️</button>
+          <button class="icon-btn" onclick="event.stopPropagation();DB.deleteProject('${id}')">🗑</button>
+        </div>
+        <div class="project-card-title">${p.name}</div>
+        ${p.synopsis ? `<div class="project-card-desc">${p.synopsis.slice(0,100)}${p.synopsis.length>100?'…':''}</div>` : ''}
+        <div class="project-card-meta">
+          ${p.genre ? `<span class="project-card-tag">${p.genre}</span>` : ''}
+          <span class="project-card-tag">${Object.keys(State.data.characters||{}).length} personajes</span>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  characters() {
+    const el = qs('#sub-chars-list');
+    const chars = State.data.characters;
+    const keys  = Object.keys(chars);
+    if (!keys.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👤</div><h3>Sin personajes</h3><p>Crea tu primer personaje con el botón +</p></div>`;
+      return;
+    }
+    el.innerHTML = keys.map(id => {
+      const c = chars[id];
+      const rels = Object.values(State.data.relations||{}).filter(r => r.charA===id||r.charB===id);
+      const relChips = rels.map(r => {
+        const otherId = r.charA===id ? r.charB : r.charA;
+        const other = chars[otherId];
+        if (!other) return '';
+        const colors = {amigos:'#2ecc71',enemigos:'#e74c3c',romance:'#e91e8c',familia:'var(--gold)',aliados:'#5dade2',rival:'#bb8fce',otro:'#888'};
+        return `<span class="char-rel-chip"><span class="char-rel-dot" style="background:${colors[r.type]||'#888'}"></span>${other.name} · ${r.type}</span>`;
+      }).join('');
+      const initial = (c.name||'?').charAt(0).toUpperCase();
+      return `<div class="char-card animate-in">
+        <div class="char-card-header" onclick="Render.toggleCharCard('${id}')">
+          <div class="char-avatar ${c.type||'secundario'}">${initial}</div>
+          <div class="char-card-info">
+            <div class="char-card-name">${c.name}</div>
+            ${c.nickname ? `<div class="char-card-nickname">"${c.nickname}"</div>` : ''}
+            <div class="char-card-type ${c.type||'secundario'}">${c.type||'secundario'}</div>
+          </div>
+          <button class="icon-btn" onclick="event.stopPropagation();Modals.openCharacter('${id}')">✏️</button>
+        </div>
+        <div class="char-card-expand" id="char-exp-${id}">
+          <div class="char-detail-grid">
+            ${c.age     ? `<div class="char-detail-item"><label>Edad</label><p>${c.age}</p></div>` : ''}
+            ${c.race    ? `<div class="char-detail-item"><label>Raza</label><p>${c.race}</p></div>` : ''}
+            ${c.build   ? `<div class="char-detail-item"><label>Constitución</label><p>${c.build}</p></div>` : ''}
+            ${c.height  ? `<div class="char-detail-item"><label>Altura</label><p>${c.height}</p></div>` : ''}
+            ${c.skin    ? `<div class="char-detail-item"><label>Piel</label><p>${c.skin}</p></div>` : ''}
+            ${c.marks   ? `<div class="char-detail-item"><label>Marcas</label><p>${c.marks}</p></div>` : ''}
+          </div>
+          ${c.background    ? `<div class="char-detail-full"><label>Background</label><p>${c.background}</p></div>` : ''}
+          ${c.motivations   ? `<div class="char-detail-full"><label>Motivaciones</label><p>${c.motivations}</p></div>` : ''}
+          ${c.goals         ? `<div class="char-detail-full"><label>Objetivos</label><p>${c.goals}</p></div>` : ''}
+          ${relChips        ? `<div class="char-detail-full"><label>Relaciones</label><div style="margin-top:6px">${relChips}</div></div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  toggleCharCard(id) {
+    const el = qs(`#char-exp-${id}`);
+    el.classList.toggle('open');
+  },
+
+  relations() {
+    const el = qs('#sub-chars-relations');
+    const rels = State.data.relations;
+    const chars = State.data.characters;
+    const keys = Object.keys(rels);
+    if (!keys.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔗</div><h3>Sin relaciones</h3><p>Añade relaciones entre personajes con el botón +</p></div>`;
+      return;
+    }
+    el.innerHTML = keys.map(id => {
+      const r = rels[id];
+      const cA = chars[r.charA]?.name || '?';
+      const cB = chars[r.charB]?.name || '?';
+      return `<div class="rel-card animate-in">
+        <div class="rel-chars">
+          <span class="rel-char-name">${cA}</span>
+          <span class="rel-arrow">⟷</span>
+          <span class="rel-char-name">${cB}</span>
+        </div>
+        <span class="rel-type-badge ${r.type||'otro'}">${r.type||'otro'}</span>
+        <button class="icon-btn" onclick="DB.deleteRelation('${id}')">🗑</button>
+      </div>`;
+    }).join('');
+  },
+
+  plotChars() {
+    const el = qs('#sub-plot-chars');
+    const plots = Object.entries(State.data.plots||{}).filter(([,p])=>p.type==='character');
+    const chars = State.data.characters;
+    if (!plots.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📜</div><h3>Sin tramas por personaje</h3><p>Pulsa + para crear la trama personal de un personaje</p></div>`;
+      return;
+    }
+    el.innerHTML = plots.map(([id,p]) => `
+      <div class="plot-card animate-in">
+        <div class="plot-card-header">
+          <div>
+            <div class="plot-card-title">${p.title}</div>
+            ${p.characterId ? `<span class="plot-card-char">${chars[p.characterId]?.name||'?'}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" onclick="Modals.openPlot('${id}')">✏️</button>
+          </div>
+        </div>
+        <div class="plot-card-text">${p.description||''}</div>
+      </div>`).join('');
+  },
+
+  plotGeneral() {
+    const el = qs('#sub-plot-general');
+    const plots = Object.entries(State.data.plots||{}).filter(([,p])=>p.type==='general');
+    if (!plots.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗺️</div><h3>Sin tramas generales</h3><p>Escribe los arcos narrativos principales de tu historia</p></div>`;
+      return;
+    }
+    el.innerHTML = plots.map(([id,p]) => `
+      <div class="plot-card animate-in">
+        <div class="plot-card-header">
+          <div class="plot-card-title">${p.title}</div>
+          <button class="icon-btn" onclick="Modals.openPlot('${id}')">✏️</button>
+        </div>
+        <div class="plot-card-text">${p.description||''}</div>
+      </div>`).join('');
+  },
+
+  timelines() {
+    const el = qs('#timeline-list');
+    const tls = State.data.timelines;
+    const keys = Object.keys(tls);
+    if (!keys.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏳</div><h3>Sin cronologías</h3><p>Crea líneas de tiempo para organizar tu historia</p></div>`;
+      return;
+    }
+    el.innerHTML = keys.map(id => {
+      const t = tls[id];
+      const milestones = t.milestones ? Object.values(t.milestones) : [];
+      return `<div class="timeline-card animate-in">
+        <div class="timeline-card-header">
+          <div>
+            <div class="timeline-card-name">${t.name}</div>
+            <div class="timeline-card-range">${t.start||'—'} → ${t.end||'—'}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" onclick="Modals.openTimeline('${id}')">✏️</button>
+          </div>
+        </div>
+        <div class="timeline-bar"><div class="timeline-bar-fill" style="width:100%"></div></div>
+        ${milestones.length ? `<div class="timeline-milestones">
+          ${milestones.map(m=>`<div class="milestone-item">
+            <div class="milestone-dot"></div>
+            <div class="milestone-text">
+              <div class="milestone-name">${m.name}</div>
+              ${m.date ? `<div class="milestone-date">${m.date}</div>` : ''}
+            </div>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  },
+
+  scenesWritten() {
+    const el = qs('#sub-scenes-written');
+    const scenes = State.data.scenes;
+    const chars  = State.data.characters;
+    const tls    = State.data.timelines;
+    const keys   = Object.keys(scenes);
+    if (!keys.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div><h3>Sin escenas</h3><p>Crea escenas escritas o usa el modo express con el micrófono</p></div>`;
+      return;
+    }
+    el.innerHTML = keys.map(id => {
+      const s = scenes[id];
+      const charChips = (s.characters||[]).map(cid => `<span class="scene-char-chip">${chars[cid]?.name||cid}</span>`).join('');
+      const tlName = s.timelineId && tls[s.timelineId] ? tls[s.timelineId].name : '';
+      return `<div class="scene-card animate-in">
+        <div class="scene-card-header" onclick="Render.toggleScene('${id}')">
+          <div>
+            <div class="scene-card-title">${s.title||'Sin título'}</div>
+            <div class="scene-card-meta">
+              ${tlName ? `🕐 ${tlName}` : ''}
+              ${s.position ? ` · ${s.position}` : ''}
+            </div>
+          </div>
+          <button class="icon-btn" onclick="event.stopPropagation();Modals.openScene('${id}')">✏️</button>
+        </div>
+        ${charChips ? `<div class="scene-card-chars">${charChips}</div>` : ''}
+        <div class="scene-card-text" id="scene-text-${id}">${(s.text||'').replace(/\n/g,'<br>')}</div>
+      </div>`;
+    }).join('');
+  },
+
+  toggleScene(id) {
+    qs(`#scene-text-${id}`)?.classList.toggle('open');
+  },
+
+  sceneModal() {
+    // Populate selects inside scene modal
+    const chars = State.data.characters;
+    const tls   = State.data.timelines;
+    const charBoxes = qs('#scene-chars-checkboxes');
+    if (charBoxes) {
+      charBoxes.innerHTML = Object.entries(chars).map(([id,c]) =>
+        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);background:var(--bg4);padding:6px 12px;border-radius:20px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="${id}" style="accent-color:var(--gold)" /> ${c.name}
+        </label>`
+      ).join('');
+    }
+    const tlSel = qs('#scene-timeline-sel');
+    if (tlSel) {
+      tlSel.innerHTML = '<option value="">Sin asignar</option>' +
+        Object.entries(tls).map(([id,t]) => `<option value="${id}">${t.name}</option>`).join('');
+    }
+  }
+};
+
+// ─── MODALS ──────────────────────────────────────────────────────
+const Modals = {
+  open(id) {
+    qs(`#${id}`).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  },
+  close(id) {
+    qs(`#${id}`).classList.remove('open');
+    document.body.style.overflow = '';
+  },
+  openProject(editId) {
+    qs('#project-edit-id').value = editId||'';
+    qs('#modal-project-title').textContent = editId ? 'Editar proyecto' : 'Nuevo proyecto';
+    if (editId) {
+      const p = State.data.projects[editId];
+      qs('#project-name').value     = p.name||'';
+      qs('#project-genre').value    = p.genre||'';
+      qs('#project-synopsis').value = p.synopsis||'';
+    } else {
+      qs('#project-name').value = qs('#project-genre').value = qs('#project-synopsis').value = '';
+    }
+    Modals.open('modal-project');
+  },
+  openCharacter(editId) {
+    qs('#char-edit-id').value = editId||'';
+    qs('#modal-char-title').textContent = editId ? 'Editar personaje' : 'Nuevo personaje';
+    qs('#char-delete-btn').style.display = editId ? 'block' : 'none';
+    if (editId) {
+      const c = State.data.characters[editId];
+      ['name','nickname','age','race','build','height','skin','marks','background','motivations','goals'].forEach(f => {
+        const el = qs(`#char-${f}`);
+        if (el) el.value = c[f]||'';
+      });
+      qs('#char-type').value = c.type||'protagonista';
+    } else {
+      qsa('#modal-character input, #modal-character textarea, #modal-character select').forEach(el => { if(el.id!=='char-type') el.value=''; });
+      qs('#char-type').value = 'protagonista';
+    }
+    Modals.open('modal-character');
+  },
+  openRelation() {
+    const chars = State.data.characters;
+    const opts  = Object.entries(chars).map(([id,c])=>`<option value="${id}">${c.name}</option>`).join('');
+    qs('#rel-char-a').innerHTML = opts;
+    qs('#rel-char-b').innerHTML = opts;
+    qs('#rel-edit-id').value = '';
+    qs('#rel-desc').value = '';
+    Modals.open('modal-relation');
+  },
+  openPlot(editId) {
+    const sub = State.currentSubTabs.plot;
+    const isChar = sub === 'plot-chars';
+    qs('#plot-type-hidden').value = isChar ? 'character' : 'general';
+    qs('#plot-char-group').style.display = isChar ? 'block' : 'none';
+    qs('#modal-plot-title').textContent = editId ? 'Editar trama' : (isChar ? 'Trama de personaje' : 'Trama general');
+    qs('#plot-delete-btn').style.display = editId ? 'block' : 'none';
+    qs('#plot-edit-id').value = editId||'';
+    // populate character select
+    const chars = State.data.characters;
+    qs('#plot-character').innerHTML = Object.entries(chars).map(([id,c])=>`<option value="${id}">${c.name}</option>`).join('');
+    if (editId) {
+      const p = State.data.plots[editId];
+      qs('#plot-title-input').value   = p.title||'';
+      qs('#plot-description').value   = p.description||'';
+      if (p.characterId) qs('#plot-character').value = p.characterId;
+      qs('#plot-type-hidden').value   = p.type||'general';
+      qs('#plot-char-group').style.display = p.type==='character' ? 'block' : 'none';
+    } else {
+      qs('#plot-title-input').value = qs('#plot-description').value = '';
+    }
+    Modals.open('modal-plot');
+  },
+  openTimeline(editId) {
+    qs('#tl-edit-id').value = editId||'';
+    qs('#modal-tl-title').textContent = editId ? 'Editar cronología' : 'Nueva cronología';
+    qs('#tl-delete-btn').style.display = editId ? 'block' : 'none';
+    qs('#tl-milestones-list').innerHTML = '';
+    if (editId) {
+      const t = State.data.timelines[editId];
+      qs('#tl-name').value  = t.name||'';
+      qs('#tl-start').value = t.start||'';
+      qs('#tl-end').value   = t.end||'';
+      if (t.milestones) {
+        Object.entries(t.milestones).forEach(([mid,m]) => Timelines.addMilestoneField(m.name, m.date, mid));
+      }
+    } else {
+      qs('#tl-name').value = qs('#tl-start').value = qs('#tl-end').value = '';
+    }
+    Modals.open('modal-timeline');
+  },
+  openScene(editId) {
+    qs('#scene-edit-id').value = editId||'';
+    qs('#modal-scene-title').textContent = editId ? 'Editar escena' : 'Nueva escena';
+    qs('#scene-delete-btn').style.display = editId ? 'block' : 'none';
+    Render.sceneModal();
+    if (editId) {
+      const s = State.data.scenes[editId];
+      qs('#scene-title-input').value  = s.title||'';
+      qs('#scene-position').value     = s.position||'';
+      qs('#scene-text').value         = s.text||'';
+      if (s.timelineId) qs('#scene-timeline-sel').value = s.timelineId;
+      setTimeout(()=>{
+        qsa('#scene-chars-checkboxes input[type=checkbox]').forEach(cb => {
+          cb.checked = (s.characters||[]).includes(cb.value);
+        });
+      }, 50);
+    } else {
+      qs('#scene-title-input').value = qs('#scene-position').value = qs('#scene-text').value = '';
+    }
+    Modals.open('modal-scene');
+  }
+};
+
+// Close modals on overlay click
+qsa('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) Modals.close(overlay.id);
+  });
+});
+
+// ─── DB OPERATIONS ───────────────────────────────────────────────
+const DB = {
+  async saveProject() {
+    const id   = qs('#project-edit-id').value || uid();
+    const data = {
+      name:     qs('#project-name').value.trim(),
+      genre:    qs('#project-genre').value,
+      synopsis: qs('#project-synopsis').value.trim(),
+      createdAt: Date.now()
+    };
+    if (!data.name) return alert('El proyecto necesita un nombre.');
+    await dbSet(`projects/${id}`, data);
+    Modals.close('modal-project');
+  },
+  async deleteProject(id) {
+    if (!confirm('¿Eliminar este proyecto y todos sus datos?')) return;
+    await Promise.all([
+      dbRemove(`projects/${id}`),
+      dbRemove(`characters/${id}`),
+      dbRemove(`relations/${id}`),
+      dbRemove(`plots/${id}`),
+      dbRemove(`timelines/${id}`),
+      dbRemove(`scenes/${id}`)
+    ]);
+  },
+  async saveCharacter() {
+    const pid = State.currentProjectId;
+    const id  = qs('#char-edit-id').value || uid();
+    const data = {};
+    ['name','nickname','type','age','race','build','height','skin','marks','background','motivations','goals'].forEach(f => {
+      const el = qs(`#char-${f}`);
+      if (el) data[f] = el.value.trim ? el.value.trim() : el.value;
+    });
+    if (!data.name) return alert('El personaje necesita un nombre.');
+    await dbSet(`characters/${pid}/${id}`, data);
+    Modals.close('modal-character');
+  },
+  async deleteCharacter() {
+    const pid = State.currentProjectId;
+    const id  = qs('#char-edit-id').value;
+    if (!id || !confirm('¿Eliminar este personaje?')) return;
+    await dbRemove(`characters/${pid}/${id}`);
+    Modals.close('modal-character');
+  },
+  async saveRelation() {
+    const pid = State.currentProjectId;
+    const id  = uid();
+    const data = {
+      charA: qs('#rel-char-a').value,
+      charB: qs('#rel-char-b').value,
+      type:  qs('#rel-type').value,
+      desc:  qs('#rel-desc').value.trim()
+    };
+    if (data.charA === data.charB) return alert('Elige dos personajes distintos.');
+    await dbSet(`relations/${pid}/${id}`, data);
+    Modals.close('modal-relation');
+  },
+  async deleteRelation(id) {
+    if (!confirm('¿Eliminar esta relación?')) return;
+    await dbRemove(`relations/${State.currentProjectId}/${id}`);
+  },
+  async savePlot() {
+    const pid = State.currentProjectId;
+    const id  = qs('#plot-edit-id').value || uid();
+    const type = qs('#plot-type-hidden').value;
+    const data = {
+      title:       qs('#plot-title-input').value.trim(),
+      description: qs('#plot-description').value.trim(),
+      type,
+      characterId: type==='character' ? qs('#plot-character').value : null
+    };
+    if (!data.title) return alert('La trama necesita un título.');
+    await dbSet(`plots/${pid}/${id}`, data);
+    Modals.close('modal-plot');
+  },
+  async deletePlot() {
+    const id = qs('#plot-edit-id').value;
+    if (!id || !confirm('¿Eliminar esta trama?')) return;
+    await dbRemove(`plots/${State.currentProjectId}/${id}`);
+    Modals.close('modal-plot');
+  },
+  async saveTimeline() {
+    const pid = State.currentProjectId;
+    const id  = qs('#tl-edit-id').value || uid();
+    const milestoneEls = qsa('.milestone-row', qs('#tl-milestones-list'));
+    const milestones = {};
+    milestoneEls.forEach(row => {
+      const mid  = row.dataset.mid || uid();
+      const name = qs('.ms-name', row).value.trim();
+      const date = qs('.ms-date', row).value.trim();
+      if (name) milestones[mid] = { name, date };
+    });
+    const data = {
+      name:  qs('#tl-name').value.trim(),
+      start: qs('#tl-start').value.trim(),
+      end:   qs('#tl-end').value.trim(),
+      milestones
+    };
+    if (!data.name) return alert('La cronología necesita un nombre.');
+    await dbSet(`timelines/${pid}/${id}`, data);
+    Modals.close('modal-timeline');
+  },
+  async deleteTimeline() {
+    const id = qs('#tl-edit-id').value;
+    if (!id || !confirm('¿Eliminar esta cronología?')) return;
+    await dbRemove(`timelines/${State.currentProjectId}/${id}`);
+    Modals.close('modal-timeline');
+  },
+  async saveScene(overrideData) {
+    const pid  = State.currentProjectId;
+    const id   = qs('#scene-edit-id').value || uid();
+    const data = overrideData || {
+      title:      qs('#scene-title-input').value.trim(),
+      position:   qs('#scene-position').value.trim(),
+      timelineId: qs('#scene-timeline-sel').value,
+      characters: qsa('#scene-chars-checkboxes input:checked').map(cb=>cb.value),
+      text:       qs('#scene-text').value.trim(),
+      createdAt:  Date.now()
+    };
+    if (!data.title) return alert('La escena necesita un título.');
+    await dbSet(`scenes/${pid}/${id}`, data);
+    if (!overrideData) Modals.close('modal-scene');
+  },
+  async deleteScene() {
+    const id = qs('#scene-edit-id').value;
+    if (!id || !confirm('¿Eliminar esta escena?')) return;
+    await dbRemove(`scenes/${State.currentProjectId}/${id}`);
+    Modals.close('modal-scene');
+  }
+};
+
+// ─── TIMELINES helper ────────────────────────────────────────────
+const Timelines = {
+  addMilestoneField(name='', date='', mid='') {
+    const list = qs('#tl-milestones-list');
+    const row  = document.createElement('div');
+    row.className = 'milestone-row';
+    row.dataset.mid = mid || uid();
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center';
+    row.innerHTML = `
+      <input type="text" class="form-input ms-name" placeholder="Nombre del hito" value="${name}" />
+      <input type="text" class="form-input ms-date" placeholder="Fecha / momento" value="${date}" />
+      <button onclick="this.parentElement.remove()" style="width:36px;height:36px;border-radius:8px;background:var(--bg4);color:var(--text3);font-size:18px;display:flex;align-items:center;justify-content:center">×</button>`;
+    list.appendChild(row);
+  }
+};
+
+// ─── VOICE / SPEECH RECOGNITION ──────────────────────────────────
+const Voice = {
+  recognition: null,
+  isRecording: false,
+  transcript: '',
+  init() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    this.recognition = new SR();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'es-ES';
+    this.recognition.onresult = e => {
+      let final = '', interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      Voice.transcript += final;
+      qs('#voice-transcript').value = Voice.transcript + interim;
+    };
+    this.recognition.onend = () => {
+      if (Voice.isRecording) Voice.recognition.start();
+    };
+  },
+  toggle() {
+    if (!this.recognition) {
+      return alert('Tu navegador no soporta reconocimiento de voz. Usa Safari en iPhone.');
+    }
+    if (this.isRecording) {
+      this.isRecording = false;
+      this.recognition.stop();
+      qs('#mic-btn').classList.remove('recording');
+      qs('#mic-status').textContent = 'Grabación parada. Edita el texto si quieres.';
+    } else {
+      this.isRecording = true;
+      this.transcript  = qs('#voice-transcript').value;
+      this.recognition.start();
+      qs('#mic-btn').classList.add('recording');
+      qs('#mic-status').textContent = '● Grabando...';
+    }
+  },
+  cancel() {
+    if (this.isRecording) this.toggle();
+    this.transcript = '';
+    qs('#voice-transcript').value = '';
+    qs('#mic-status').textContent = 'Listo para grabar';
+  },
+  async saveScene() {
+    const text = qs('#voice-transcript').value.trim();
+    if (!text) return alert('No hay texto que guardar.');
+    const title = prompt('Título para esta escena:', 'Escena express ' + new Date().toLocaleDateString('es'));
+    if (!title) return;
+    await DB.saveScene({
+      title,
+      position:   '',
+      timelineId: '',
+      characters: [],
+      text,
+      createdAt: Date.now(),
+      source: 'voice'
+    });
+    Voice.cancel();
+    alert('¡Escena guardada!');
+    App.switchSubTab('scenes','scenes-written');
+  }
+};
+Voice.init();
+
+// ─── SERVICE WORKER ──────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window._firebaseReady) {
+    document.addEventListener('firebaseReady', () => Auth.init());
+  } else {
+    Auth.init();
+  }
+});
+
+// Expose globally
+window.App      = App;
+window.Auth     = Auth;
+window.Modals   = Modals;
+window.DB       = DB;
+window.Render   = Render;
+window.Timelines= Timelines;
+window.Voice    = Voice;
+</script>
+</body>
+</html>
